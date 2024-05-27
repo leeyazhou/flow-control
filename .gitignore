@@ -11,6 +11,8 @@ tmp/
 *~.nib
 local.properties
 .settings/
+.classpath
+.project
 .loadpath
 .recommenders
 
@@ -37,6 +39,7 @@ local.properties
 
 # sbteclipse plugin
 .target
+target/
 
 # Tern plugin
 .tern-project
