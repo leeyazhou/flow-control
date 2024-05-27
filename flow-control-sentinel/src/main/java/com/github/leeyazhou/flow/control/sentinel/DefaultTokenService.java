@@ -29,69 +29,70 @@ import com.alibaba.csp.sentinel.spi.Spi;
  *
  * @author Eric Zhao
  * @author leeyazhou
+ * 
  * @since 1.4.0
  */
 @Spi(order = -1)
 public class DefaultTokenService implements TokenService {
 
-  @Override
-  public TokenResult requestToken(Long ruleId, int acquireCount, boolean prioritized) {
-    if (notValidRequest(ruleId, acquireCount)) {
-      return badRequest();
-    }
-    // The rule should be valid.
-    FlowRule rule = ClusterFlowRuleManager.getFlowRuleById(ruleId);
-    if (rule == null) {
-      return new TokenResult(TokenResultStatus.NO_RULE_EXISTS);
-    }
+    @Override
+    public TokenResult requestToken(Long ruleId, int acquireCount, boolean prioritized) {
+        if (notValidRequest(ruleId, acquireCount)) {
+            return badRequest();
+        }
+        // The rule should be valid.
+        FlowRule rule = ClusterFlowRuleManager.getFlowRuleById(ruleId);
+        if (rule == null) {
+            return new TokenResult(TokenResultStatus.NO_RULE_EXISTS);
+        }
 
-    return ClusterFlowChecker.acquireClusterToken(rule, acquireCount, prioritized);
-  }
-
-  @Override
-  public TokenResult requestParamToken(Long ruleId, int acquireCount, Collection<Object> params) {
-    if (notValidRequest(ruleId, acquireCount) || params == null || params.isEmpty()) {
-      return badRequest();
-    }
-    // The rule should be valid.
-    ParamFlowRule rule = ClusterParamFlowRuleManager.getParamRuleById(ruleId);
-    if (rule == null) {
-      return new TokenResult(TokenResultStatus.NO_RULE_EXISTS);
+        return ClusterFlowChecker.acquireClusterToken(rule, acquireCount, prioritized);
     }
 
-    return ClusterParamFlowChecker.acquireClusterToken(rule, acquireCount, params);
-  }
+    @Override
+    public TokenResult requestParamToken(Long ruleId, int acquireCount, Collection<Object> params) {
+        if (notValidRequest(ruleId, acquireCount) || params == null || params.isEmpty()) {
+            return badRequest();
+        }
+        // The rule should be valid.
+        ParamFlowRule rule = ClusterParamFlowRuleManager.getParamRuleById(ruleId);
+        if (rule == null) {
+            return new TokenResult(TokenResultStatus.NO_RULE_EXISTS);
+        }
 
-  @Override
-  public TokenResult requestConcurrentToken(String clientAddress, Long ruleId, int acquireCount) {
-    if (notValidRequest(clientAddress, ruleId, acquireCount)) {
-      return badRequest();
+        return ClusterParamFlowChecker.acquireClusterToken(rule, acquireCount, params);
     }
-    // The rule should be valid.
-    FlowRule rule = ClusterFlowRuleManager.getFlowRuleById(ruleId);
-    if (rule == null) {
-      return new TokenResult(TokenResultStatus.NO_RULE_EXISTS);
+
+    @Override
+    public TokenResult requestConcurrentToken(String clientAddress, Long ruleId, int acquireCount) {
+        if (notValidRequest(clientAddress, ruleId, acquireCount)) {
+            return badRequest();
+        }
+        // The rule should be valid.
+        FlowRule rule = ClusterFlowRuleManager.getFlowRuleById(ruleId);
+        if (rule == null) {
+            return new TokenResult(TokenResultStatus.NO_RULE_EXISTS);
+        }
+        return ConcurrentClusterFlowChecker.acquireConcurrentToken(clientAddress, rule, acquireCount);
     }
-    return ConcurrentClusterFlowChecker.acquireConcurrentToken(clientAddress, rule, acquireCount);
-  }
 
-  @Override
-  public void releaseConcurrentToken(Long tokenId) {
-    if (tokenId == null) {
-      return;
+    @Override
+    public void releaseConcurrentToken(Long tokenId) {
+        if (tokenId == null) {
+            return;
+        }
+        ConcurrentClusterFlowChecker.releaseConcurrentToken(tokenId);
     }
-    ConcurrentClusterFlowChecker.releaseConcurrentToken(tokenId);
-  }
 
-  private boolean notValidRequest(Long id, int count) {
-    return id == null || id <= 0 || count <= 0;
-  }
+    private boolean notValidRequest(Long id, int count) {
+        return id == null || id <= 0 || count <= 0;
+    }
 
-  private boolean notValidRequest(String address, Long id, int count) {
-    return address == null || "".equals(address) || id == null || id <= 0 || count <= 0;
-  }
+    private boolean notValidRequest(String address, Long id, int count) {
+        return address == null || "".equals(address) || id == null || id <= 0 || count <= 0;
+    }
 
-  private TokenResult badRequest() {
-    return new TokenResult(TokenResultStatus.BAD_REQUEST);
-  }
+    private TokenResult badRequest() {
+        return new TokenResult(TokenResultStatus.BAD_REQUEST);
+    }
 }
